@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Settings: Public read, write allowed for admin management
+    match /settings/global {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Page Drafts & Published
+    match /pagesDrafts/{pageId} {
+      allow read, write: if isValidId(pageId);
+    }
+
+    match /pagesPublished/{pageId} {
+      allow read: if isValidId(pageId);
+      allow write: if isValidId(pageId);
+    }
+
+    // Products Catalog
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isValidId(productId);
+    }
+
+    // Gallery Items
+    match /galleryItems/{galleryId} {
+      allow read: if true;
+      allow write: if isValidId(galleryId);
+    }
+
+    // Inquiries: Anyone can submit, admin can manage
+    match /inquiries/{inquiryId} {
+      allow create: if isValidId(inquiryId);
+      allow read, update, delete: if isValidId(inquiryId);
+    }
+  }
+}
